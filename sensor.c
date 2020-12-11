@@ -28,9 +28,9 @@
  *
  * Device
  * ------
- * ATTiny26
+ * ATtiny26
  * signature = 0x1e9109
- * Fuse bits for ATTiny26
+ * Fuse bits for ATtiny26
  *  Int RC osc 4MHz; Start-up time 6CK+64ms;[CKSEL=0011 SUT=10];
  *  Brown-out detection at VCC=4.0V; [BODLEVEL=0]
  *  Low=0xe3 Hi=0xf5
@@ -38,7 +38,22 @@
  *
  * to set fuses:
  * avrdude -c usbtiny -p attiny26 -U lfuse:w:0xe3:m -U hfuse:w:0xf5:m
- */
+
+              +----------+
+              | ATtiny26 |
+         MOSI-|1       20|-ADC0
+         MISO-|2       19|-ADC1
+          SCK-|3       18|-ADC2
+             -|4       17|-ADC3
+          VCC-|5       16|-GND
+          GND-|6       15|-AVCC
+             -|7       14|-ADC4
+         LED1-|8       13|-ADC5
+           SS-|9       12|-ADC6
+        RESET-|10      11|-ADC7
+              |          |
+              +----------+
+*/
 
 #include <stdint.h>
 #include <avr/io.h>
@@ -74,13 +89,13 @@ ioinit(void)
 {
     // set pullups on unused pins
     // PORTA setup pins for output
-    
+
     // setup PINS for input, RESET is already set as input and pull up on
     // due to fuse setting
     DDRB &= ~(_BV(DI)|_BV(SCK)|_BV(SS));
     // set pullups on input pins
     PORTB |= _BV(DI)|_BV(SCK);
-    
+
     // PORTB setup PINS for output
     DDRB |= _BV(DO)|_BV(LED1)|_BV(OC);
     // light up led
@@ -119,7 +134,7 @@ int
 main(void)
 {
     ioinit();
-    
+
 	// start interrupts
 	sei();
 
@@ -140,7 +155,7 @@ main(void)
                 }
             }
             ADMUX = current_channel;
-            
+
             // start a new conversion
             ADCSR |= _BV(ADSC);
         }
@@ -245,7 +260,7 @@ ISR(USI_OVF_vect)
 {
     uint8_t recvd = USIDR;
     static uint8_t send2 = 0;
-    
+
     switch (spi_state)
     {
     case 0: // first byte recvd, send second
@@ -281,4 +296,3 @@ ISR(USI_OVF_vect)
     // clear the interrupt flag
     USISR = _BV(USIOIF);
 }
-

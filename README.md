@@ -1,5 +1,6 @@
 # sensor-peripheral
-Firmware for ATTiny26 that uses ADC in response to SPI requests. Intended for use with Raspberry PI boat computer project
+Firmware for ATtiny26 that uses ADC in response to SPI
+requests. Intended for use with Raspberry PI boat computer project
 
 Makefile is setup to use avr-gcc, avr-libc, and avrdude to compile and program the chip respectively. 
 

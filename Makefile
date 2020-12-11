@@ -278,7 +278,6 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 # to get a full listing.
 #
 AVRDUDE_PROGRAMMER = usbtiny
-#AVRDUDE_PROGRAMMER = stk500v1
 
 AVRDUDE_MCU = ATtiny26
 
