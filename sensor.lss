@@ -1,0 +1,493 @@
+
+sensor.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00000278  00000000  00000000  00000094  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  00000278  0000030c  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000017  00800060  00800060  0000030c  2**0
+                  ALLOC
+  3 .stab         0000096c  00000000  00000000  0000030c  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  4 .stabstr      00000c8d  00000000  00000000  00000c78  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  5 .comment      00000011  00000000  00000000  00001905  2**0
+                  CONTENTS, READONLY
+  6 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  00001918  2**2
+                  CONTENTS, READONLY
+  7 .debug_info   000002dc  00000000  00000000  00001954  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_abbrev 000002b6  00000000  00000000  00001c30  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   0000001a  00000000  00000000  00001ee6  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    000000fa  00000000  00000000  00001f00  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0b c0       	rjmp	.+22     	; 0x18 <__ctors_end>
+   2:	70 c0       	rjmp	.+224    	; 0xe4 <__vector_1>
+   4:	17 c0       	rjmp	.+46     	; 0x34 <__bad_interrupt>
+   6:	16 c0       	rjmp	.+44     	; 0x34 <__bad_interrupt>
+   8:	15 c0       	rjmp	.+42     	; 0x34 <__bad_interrupt>
+   a:	14 c0       	rjmp	.+40     	; 0x34 <__bad_interrupt>
+   c:	5c c0       	rjmp	.+184    	; 0xc6 <__vector_6>
+   e:	12 c0       	rjmp	.+36     	; 0x34 <__bad_interrupt>
+  10:	81 c0       	rjmp	.+258    	; 0x114 <__vector_8>
+  12:	10 c0       	rjmp	.+32     	; 0x34 <__bad_interrupt>
+  14:	0f c0       	rjmp	.+30     	; 0x34 <__bad_interrupt>
+  16:	32 c0       	rjmp	.+100    	; 0x7c <__vector_11>
+
+00000018 <__ctors_end>:
+  18:	11 24       	eor	r1, r1
+  1a:	1f be       	out	0x3f, r1	; 63
+  1c:	cf ed       	ldi	r28, 0xDF	; 223
+  1e:	cd bf       	out	0x3d, r28	; 61
+
+00000020 <__do_clear_bss>:
+  20:	20 e0       	ldi	r18, 0x00	; 0
+  22:	a0 e6       	ldi	r26, 0x60	; 96
+  24:	b0 e0       	ldi	r27, 0x00	; 0
+  26:	01 c0       	rjmp	.+2      	; 0x2a <.do_clear_bss_start>
+
+00000028 <.do_clear_bss_loop>:
+  28:	1d 92       	st	X+, r1
+
+0000002a <.do_clear_bss_start>:
+  2a:	a7 37       	cpi	r26, 0x77	; 119
+  2c:	b2 07       	cpc	r27, r18
+  2e:	e1 f7       	brne	.-8      	; 0x28 <.do_clear_bss_loop>
+  30:	c3 d0       	rcall	.+390    	; 0x1b8 <main>
+  32:	20 c1       	rjmp	.+576    	; 0x274 <_exit>
+
+00000034 <__bad_interrupt>:
+  34:	e5 cf       	rjmp	.-54     	; 0x0 <__vectors>
+
+00000036 <ioinit>:
+    // set pullups on unused pins
+    // PORTA setup pins for output
+    
+    // setup PINS for input, RESET is already set as input and pull up on
+    // due to fuse setting
+    DDRB &= ~(_BV(DI)|_BV(SCK)|_BV(SS));
+  36:	87 b3       	in	r24, 0x17	; 23
+  38:	8a 7b       	andi	r24, 0xBA	; 186
+  3a:	87 bb       	out	0x17, r24	; 23
+    // set pullups on input pins
+    PORTB |= _BV(DI)|_BV(SCK);
+  3c:	88 b3       	in	r24, 0x18	; 24
+  3e:	85 60       	ori	r24, 0x05	; 5
+  40:	88 bb       	out	0x18, r24	; 24
+    
+    // PORTB setup PINS for output
+    DDRB |= _BV(DO)|_BV(LED1)|_BV(OC);
+  42:	87 b3       	in	r24, 0x17	; 23
+  44:	8a 62       	ori	r24, 0x2A	; 42
+  46:	87 bb       	out	0x17, r24	; 23
+    // light up led
+    PORTB |= _BV(LED1);
+  48:	c5 9a       	sbi	0x18, 5	; 24
+
+    // timer 0 set to overflow at fosc/256
+    TCCR0 = _BV(CS02);
+  4a:	84 e0       	ldi	r24, 0x04	; 4
+  4c:	83 bf       	out	0x33, r24	; 51
+    TIMSK = _BV(TOIE0);
+  4e:	82 e0       	ldi	r24, 0x02	; 2
+  50:	89 bf       	out	0x39, r24	; 57
+    OCR1A = F_CPU / 256 / 100;
+    //TIMSK |= _BV(OCIE1B);
+#endif
+
+    // start the ADC, and enable interrupt, scale clock by 8
+    ADCSR = _BV(ADEN)|_BV(ADIE)|_BV(ADPS1)|_BV(ADPS0);
+  52:	8b e8       	ldi	r24, 0x8B	; 139
+  54:	86 b9       	out	0x06, r24	; 6
+    // at start, no channels are in use
+    adc_channels = 0;           /* the channels enabled mask */
+  56:	10 92 61 00 	sts	0x0061, r1	; 0x800061 <adc_channels>
+    current_channel = -1;       /* channel currently measured */
+  5a:	8f ef       	ldi	r24, 0xFF	; 255
+  5c:	9f ef       	ldi	r25, 0xFF	; 255
+  5e:	90 93 64 00 	sts	0x0064, r25	; 0x800064 <current_channel+0x1>
+  62:	80 93 63 00 	sts	0x0063, r24	; 0x800063 <current_channel>
+    adc_finished = 0;
+  66:	10 92 62 00 	sts	0x0062, r1	; 0x800062 <adc_finished>
+
+    // set SS pin change interrupt
+    MCUCR |= _BV(ISC00);
+  6a:	85 b7       	in	r24, 0x35	; 53
+  6c:	81 60       	ori	r24, 0x01	; 1
+  6e:	85 bf       	out	0x35, r24	; 53
+    GIMSK |= _BV(INT0);
+  70:	8b b7       	in	r24, 0x3b	; 59
+  72:	80 64       	ori	r24, 0x40	; 64
+  74:	8b bf       	out	0x3b, r24	; 59
+
+    // SPI starting state
+    spi_state = 0;
+  76:	10 92 66 00 	sts	0x0066, r1	; 0x800066 <spi_state>
+  7a:	08 95       	ret
+
+0000007c <__vector_11>:
+/*
+ * ADC complete interrupt
+ * interrupt flag cleared by hardware
+ */
+ISR(ADC_vect)
+{
+  7c:	1f 92       	push	r1
+  7e:	0f 92       	push	r0
+  80:	0f b6       	in	r0, 0x3f	; 63
+  82:	0f 92       	push	r0
+  84:	11 24       	eor	r1, r1
+  86:	2f 93       	push	r18
+  88:	8f 93       	push	r24
+  8a:	9f 93       	push	r25
+  8c:	ef 93       	push	r30
+  8e:	ff 93       	push	r31
+    uint8_t low, high;
+    low = ADCL;
+  90:	84 b1       	in	r24, 0x04	; 4
+    high = ADCH;
+  92:	25 b1       	in	r18, 0x05	; 5
+    adc_values[current_channel] = (high << 8) | low;
+  94:	e0 91 63 00 	lds	r30, 0x0063	; 0x800063 <current_channel>
+  98:	f0 91 64 00 	lds	r31, 0x0064	; 0x800064 <current_channel+0x1>
+  9c:	ee 0f       	add	r30, r30
+  9e:	ff 1f       	adc	r31, r31
+  a0:	e9 59       	subi	r30, 0x99	; 153
+  a2:	ff 4f       	sbci	r31, 0xFF	; 255
+  a4:	90 e0       	ldi	r25, 0x00	; 0
+  a6:	92 2b       	or	r25, r18
+  a8:	91 83       	std	Z+1, r25	; 0x01
+  aa:	80 83       	st	Z, r24
+    adc_finished = 1;
+  ac:	81 e0       	ldi	r24, 0x01	; 1
+  ae:	80 93 62 00 	sts	0x0062, r24	; 0x800062 <adc_finished>
+}
+  b2:	ff 91       	pop	r31
+  b4:	ef 91       	pop	r30
+  b6:	9f 91       	pop	r25
+  b8:	8f 91       	pop	r24
+  ba:	2f 91       	pop	r18
+  bc:	0f 90       	pop	r0
+  be:	0f be       	out	0x3f, r0	; 63
+  c0:	0f 90       	pop	r0
+  c2:	1f 90       	pop	r1
+  c4:	18 95       	reti
+
+000000c6 <__vector_6>:
+/*
+ * Timer0 overflow interrupt
+ * interrupt flag cleared by hardware
+ */
+ISR(TIMER0_OVF0_vect)
+{
+  c6:	1f 92       	push	r1
+  c8:	0f 92       	push	r0
+  ca:	0f b6       	in	r0, 0x3f	; 63
+  cc:	0f 92       	push	r0
+  ce:	11 24       	eor	r1, r1
+    if (bit_is_clear(PINB, LED1)) PORTB |= _BV(LED1);
+  d0:	b5 99       	sbic	0x16, 5	; 22
+  d2:	02 c0       	rjmp	.+4      	; 0xd8 <__vector_6+0x12>
+  d4:	c5 9a       	sbi	0x18, 5	; 24
+  d6:	01 c0       	rjmp	.+2      	; 0xda <__vector_6+0x14>
+    else PORTB &= ~(_BV(LED1));
+  d8:	c5 98       	cbi	0x18, 5	; 24
+}
+  da:	0f 90       	pop	r0
+  dc:	0f be       	out	0x3f, r0	; 63
+  de:	0f 90       	pop	r0
+  e0:	1f 90       	pop	r1
+  e2:	18 95       	reti
+
+000000e4 <__vector_1>:
+/*
+ * INT0 interrupt
+ * interrupt flag cleared by hardware
+ */
+ISR(INT0_vect)
+{
+  e4:	1f 92       	push	r1
+  e6:	0f 92       	push	r0
+  e8:	0f b6       	in	r0, 0x3f	; 63
+  ea:	0f 92       	push	r0
+  ec:	11 24       	eor	r1, r1
+  ee:	8f 93       	push	r24
+    if (bit_is_clear(PINB, SS))
+  f0:	b6 99       	sbic	0x16, 6	; 22
+  f2:	06 c0       	rjmp	.+12     	; 0x100 <__vector_1+0x1c>
+    {
+        spi_state = 0;
+  f4:	10 92 66 00 	sts	0x0066, r1	; 0x800066 <spi_state>
+        // spi transfer started
+        // setup the USI as a SPI slave, with counter overflow interrupt
+        USICR = _BV(USIOIE)|_BV(USIWM0)|_BV(USICS1);
+  f8:	88 e5       	ldi	r24, 0x58	; 88
+  fa:	8d b9       	out	0x0d, r24	; 13
+        PORTB |= _BV(OC);
+  fc:	c3 9a       	sbi	0x18, 3	; 24
+  fe:	04 c0       	rjmp	.+8      	; 0x108 <__vector_1+0x24>
+    } else {
+        // turn off USI
+        USICR = 0;
+ 100:	1d b8       	out	0x0d, r1	; 13
+        PORTB &= ~(_BV(OC));
+ 102:	c3 98       	cbi	0x18, 3	; 24
+        spi_state = 0;
+ 104:	10 92 66 00 	sts	0x0066, r1	; 0x800066 <spi_state>
+    }
+}
+ 108:	8f 91       	pop	r24
+ 10a:	0f 90       	pop	r0
+ 10c:	0f be       	out	0x3f, r0	; 63
+ 10e:	0f 90       	pop	r0
+ 110:	1f 90       	pop	r1
+ 112:	18 95       	reti
+
+00000114 <__vector_8>:
+ 114:	1f 92       	push	r1
+ 116:	0f 92       	push	r0
+ 118:	0f b6       	in	r0, 0x3f	; 63
+ 11a:	0f 92       	push	r0
+ 11c:	11 24       	eor	r1, r1
+ 11e:	8f 93       	push	r24
+ 120:	9f 93       	push	r25
+ 122:	ef 93       	push	r30
+ 124:	ff 93       	push	r31
+ 126:	8f b1       	in	r24, 0x0f	; 15
+ 128:	90 91 66 00 	lds	r25, 0x0066	; 0x800066 <spi_state>
+ 12c:	99 23       	and	r25, r25
+ 12e:	19 f0       	breq	.+6      	; 0x136 <__vector_8+0x22>
+ 130:	91 30       	cpi	r25, 0x01	; 1
+ 132:	31 f1       	breq	.+76     	; 0x180 <__vector_8+0x6c>
+ 134:	32 c0       	rjmp	.+100    	; 0x19a <__vector_8+0x86>
+ 136:	80 93 65 00 	sts	0x0065, r24	; 0x800065 <addr>
+ 13a:	80 91 65 00 	lds	r24, 0x0065	; 0x800065 <addr>
+ 13e:	80 31       	cpi	r24, 0x10	; 16
+ 140:	c0 f0       	brcs	.+48     	; 0x172 <__vector_8+0x5e>
+ 142:	80 91 65 00 	lds	r24, 0x0065	; 0x800065 <addr>
+ 146:	88 31       	cpi	r24, 0x18	; 24
+ 148:	a0 f4       	brcc	.+40     	; 0x172 <__vector_8+0x5e>
+ 14a:	e0 91 65 00 	lds	r30, 0x0065	; 0x800065 <addr>
+ 14e:	f0 e0       	ldi	r31, 0x00	; 0
+ 150:	ee 0f       	add	r30, r30
+ 152:	ff 1f       	adc	r31, r31
+ 154:	e9 5b       	subi	r30, 0xB9	; 185
+ 156:	ff 4f       	sbci	r31, 0xFF	; 255
+ 158:	80 81       	ld	r24, Z
+ 15a:	8f b9       	out	0x0f, r24	; 15
+ 15c:	e0 91 65 00 	lds	r30, 0x0065	; 0x800065 <addr>
+ 160:	f0 e0       	ldi	r31, 0x00	; 0
+ 162:	ee 0f       	add	r30, r30
+ 164:	ff 1f       	adc	r31, r31
+ 166:	e9 5b       	subi	r30, 0xB9	; 185
+ 168:	ff 4f       	sbci	r31, 0xFF	; 255
+ 16a:	81 81       	ldd	r24, Z+1	; 0x01
+ 16c:	80 93 60 00 	sts	0x0060, r24	; 0x800060 <__DATA_REGION_ORIGIN__>
+ 170:	05 c0       	rjmp	.+10     	; 0x17c <__vector_8+0x68>
+ 172:	80 91 65 00 	lds	r24, 0x0065	; 0x800065 <addr>
+ 176:	1f b8       	out	0x0f, r1	; 15
+ 178:	10 92 60 00 	sts	0x0060, r1	; 0x800060 <__DATA_REGION_ORIGIN__>
+ 17c:	81 e0       	ldi	r24, 0x01	; 1
+ 17e:	0a c0       	rjmp	.+20     	; 0x194 <__vector_8+0x80>
+ 180:	90 91 65 00 	lds	r25, 0x0065	; 0x800065 <addr>
+ 184:	91 30       	cpi	r25, 0x01	; 1
+ 186:	11 f4       	brne	.+4      	; 0x18c <__vector_8+0x78>
+ 188:	80 93 61 00 	sts	0x0061, r24	; 0x800061 <adc_channels>
+ 18c:	80 91 60 00 	lds	r24, 0x0060	; 0x800060 <__DATA_REGION_ORIGIN__>
+ 190:	8f b9       	out	0x0f, r24	; 15
+ 192:	82 e0       	ldi	r24, 0x02	; 2
+ 194:	80 93 66 00 	sts	0x0066, r24	; 0x800066 <spi_state>
+ 198:	04 c0       	rjmp	.+8      	; 0x1a2 <__vector_8+0x8e>
+ 19a:	83 e0       	ldi	r24, 0x03	; 3
+ 19c:	80 93 66 00 	sts	0x0066, r24	; 0x800066 <spi_state>
+ 1a0:	1f b8       	out	0x0f, r1	; 15
+ 1a2:	80 e4       	ldi	r24, 0x40	; 64
+ 1a4:	8e b9       	out	0x0e, r24	; 14
+ 1a6:	ff 91       	pop	r31
+ 1a8:	ef 91       	pop	r30
+ 1aa:	9f 91       	pop	r25
+ 1ac:	8f 91       	pop	r24
+ 1ae:	0f 90       	pop	r0
+ 1b0:	0f be       	out	0x3f, r0	; 63
+ 1b2:	0f 90       	pop	r0
+ 1b4:	1f 90       	pop	r1
+ 1b6:	18 95       	reti
+
+000001b8 <main>:
+}
+
+int
+main(void)
+{
+    ioinit();
+ 1b8:	3e df       	rcall	.-388    	; 0x36 <ioinit>
+    
+	// start interrupts
+	sei();
+ 1ba:	78 94       	sei
+
+        if (adc_finished)
+        {
+            // if no channels are requested, then finish
+            if (adc_channels == 0) {
+                current_channel = -1;
+ 1bc:	4f ef       	ldi	r20, 0xFF	; 255
+ 1be:	5f ef       	ldi	r21, 0xFF	; 255
+    // main loop
+    while(1)
+    {
+        // if we now have a set of channels to look at,
+        // start the measuring
+        if (adc_channels > 0 && current_channel < 0)
+ 1c0:	80 91 61 00 	lds	r24, 0x0061	; 0x800061 <adc_channels>
+ 1c4:	88 23       	and	r24, r24
+ 1c6:	01 f1       	breq	.+64     	; 0x208 <main+0x50>
+ 1c8:	80 91 63 00 	lds	r24, 0x0063	; 0x800063 <current_channel>
+ 1cc:	90 91 64 00 	lds	r25, 0x0064	; 0x800064 <current_channel+0x1>
+ 1d0:	97 ff       	sbrs	r25, 7
+ 1d2:	1a c0       	rjmp	.+52     	; 0x208 <main+0x50>
+ 1d4:	80 e0       	ldi	r24, 0x00	; 0
+ 1d6:	90 e0       	ldi	r25, 0x00	; 0
+        {
+            // find the first channel
+            for (uint8_t i=0; i<8; i++)
+            {
+                if (adc_channels & (1<<i))
+ 1d8:	20 91 61 00 	lds	r18, 0x0061	; 0x800061 <adc_channels>
+ 1dc:	30 e0       	ldi	r19, 0x00	; 0
+ 1de:	08 2e       	mov	r0, r24
+ 1e0:	02 c0       	rjmp	.+4      	; 0x1e6 <main+0x2e>
+ 1e2:	35 95       	asr	r19
+ 1e4:	27 95       	ror	r18
+ 1e6:	0a 94       	dec	r0
+ 1e8:	e2 f7       	brpl	.-8      	; 0x1e2 <main+0x2a>
+ 1ea:	20 ff       	sbrs	r18, 0
+ 1ec:	05 c0       	rjmp	.+10     	; 0x1f8 <main+0x40>
+                {
+                    current_channel = i;
+ 1ee:	80 93 63 00 	sts	0x0063, r24	; 0x800063 <current_channel>
+ 1f2:	90 93 64 00 	sts	0x0064, r25	; 0x800064 <current_channel+0x1>
+                    break;
+ 1f6:	04 c0       	rjmp	.+8      	; 0x200 <main+0x48>
+ 1f8:	01 96       	adiw	r24, 0x01	; 1
+        // if we now have a set of channels to look at,
+        // start the measuring
+        if (adc_channels > 0 && current_channel < 0)
+        {
+            // find the first channel
+            for (uint8_t i=0; i<8; i++)
+ 1fa:	88 30       	cpi	r24, 0x08	; 8
+ 1fc:	91 05       	cpc	r25, r1
+ 1fe:	61 f7       	brne	.-40     	; 0x1d8 <main+0x20>
+                {
+                    current_channel = i;
+                    break;
+                }
+            }
+            ADMUX = current_channel;
+ 200:	80 91 63 00 	lds	r24, 0x0063	; 0x800063 <current_channel>
+ 204:	87 b9       	out	0x07, r24	; 7
+            
+            // start a new conversion
+            ADCSR |= _BV(ADSC);
+ 206:	36 9a       	sbi	0x06, 6	; 6
+        }
+
+        if (adc_finished)
+ 208:	80 91 62 00 	lds	r24, 0x0062	; 0x800062 <adc_finished>
+ 20c:	88 23       	and	r24, r24
+ 20e:	51 f1       	breq	.+84     	; 0x264 <main+0xac>
+        {
+            // if no channels are requested, then finish
+            if (adc_channels == 0) {
+ 210:	80 91 61 00 	lds	r24, 0x0061	; 0x800061 <adc_channels>
+ 214:	81 11       	cpse	r24, r1
+ 216:	05 c0       	rjmp	.+10     	; 0x222 <main+0x6a>
+                current_channel = -1;
+ 218:	50 93 64 00 	sts	0x0064, r21	; 0x800064 <current_channel+0x1>
+ 21c:	40 93 63 00 	sts	0x0063, r20	; 0x800063 <current_channel>
+ 220:	1f c0       	rjmp	.+62     	; 0x260 <main+0xa8>
+            } else {
+                // get the next channel
+                uint8_t i = current_channel + 1;
+ 222:	80 91 63 00 	lds	r24, 0x0063	; 0x800063 <current_channel>
+                {
+                    if (adc_channels & (1<<i)) {
+                        current_channel = i;
+                        break;
+                    }
+                    ++i;
+ 226:	8f 5f       	subi	r24, 0xFF	; 255
+                current_channel = -1;
+            } else {
+                // get the next channel
+                uint8_t i = current_channel + 1;
+            find_channel:
+                while (i < 8)
+ 228:	88 30       	cpi	r24, 0x08	; 8
+ 22a:	90 f4       	brcc	.+36     	; 0x250 <main+0x98>
+                {
+                    if (adc_channels & (1<<i)) {
+ 22c:	20 91 61 00 	lds	r18, 0x0061	; 0x800061 <adc_channels>
+ 230:	68 2f       	mov	r22, r24
+ 232:	70 e0       	ldi	r23, 0x00	; 0
+ 234:	30 e0       	ldi	r19, 0x00	; 0
+ 236:	08 2e       	mov	r0, r24
+ 238:	02 c0       	rjmp	.+4      	; 0x23e <main+0x86>
+ 23a:	35 95       	asr	r19
+ 23c:	27 95       	ror	r18
+ 23e:	0a 94       	dec	r0
+ 240:	e2 f7       	brpl	.-8      	; 0x23a <main+0x82>
+ 242:	20 ff       	sbrs	r18, 0
+ 244:	f0 cf       	rjmp	.-32     	; 0x226 <main+0x6e>
+                        current_channel = i;
+ 246:	70 93 64 00 	sts	0x0064, r23	; 0x800064 <current_channel+0x1>
+ 24a:	60 93 63 00 	sts	0x0063, r22	; 0x800063 <current_channel>
+ 24e:	04 c0       	rjmp	.+8      	; 0x258 <main+0xa0>
+                        break;
+                    }
+                    ++i;
+                }
+                // roll back to 0 if needed
+                if (i == 8) {
+ 250:	88 30       	cpi	r24, 0x08	; 8
+ 252:	11 f4       	brne	.+4      	; 0x258 <main+0xa0>
+                    i = 0;
+ 254:	80 e0       	ldi	r24, 0x00	; 0
+ 256:	ea cf       	rjmp	.-44     	; 0x22c <main+0x74>
+                    goto find_channel;
+                }
+                // start new conversion
+                ADMUX = current_channel;
+ 258:	80 91 63 00 	lds	r24, 0x0063	; 0x800063 <current_channel>
+ 25c:	87 b9       	out	0x07, r24	; 7
+                ADCSR |= _BV(ADSC);
+ 25e:	36 9a       	sbi	0x06, 6	; 6
+            }
+            adc_finished = 0;
+ 260:	10 92 62 00 	sts	0x0062, r1	; 0x800062 <adc_finished>
+        }
+
+        // reset SPI if we have just handled a transaction
+        if (spi_state == 3)
+ 264:	80 91 66 00 	lds	r24, 0x0066	; 0x800066 <spi_state>
+ 268:	83 30       	cpi	r24, 0x03	; 3
+ 26a:	09 f0       	breq	.+2      	; 0x26e <main+0xb6>
+ 26c:	a9 cf       	rjmp	.-174    	; 0x1c0 <main+0x8>
+            spi_state = 0;
+ 26e:	10 92 66 00 	sts	0x0066, r1	; 0x800066 <spi_state>
+ 272:	a6 cf       	rjmp	.-180    	; 0x1c0 <main+0x8>
+
+00000274 <_exit>:
+ 274:	f8 94       	cli
+
+00000276 <__stop_program>:
+ 276:	ff cf       	rjmp	.-2      	; 0x276 <__stop_program>

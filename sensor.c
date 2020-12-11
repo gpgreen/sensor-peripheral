@@ -1,5 +1,6 @@
 /*
  * sensor-peripheral
+ * Copyright 2020 Greg Green <ggreen@bit-builder.com>
  *
  * This device will act as an SPI slave. It reads data from the
  * internal ADC These can then be retrieved by a SPI master
@@ -13,12 +14,16 @@
  *   second byte contains flags of which adc channels are requested, ie if bit 0 is set
  *   then adc channel 0 is requested and so on up to 8 channels.
  *   Third byte is zeros
- * 0x10-0x17 = retrieve adc value [address - 16], ie address 0x10 is adc channel 0
+ * 0x10-0x17 = retrieve adc value on the channel [address - 16], ie address 0x10 is adc channel 0
  *
- * SPI protocol is implemented using a state machine
+ * The USI is turned on via the SS pin INT0 interrupt, which triggers on any change. When the
+ * SS pin is pulled low, then USI is turned on and setup to receive SPI txn.
+ *
+ * SPI protocol is implemented using a state machine, transitions happen during
+ * USI overflow interrupt, which happens when a byte is received over SPI
  * state 0 = waiting for address byte
- * state 1 = second byte transfer finished
- * state 2 = third byte transfer finished
+ * state 1 = waiting for second byte
+ * state 2 = waiting for third byte
  * state 3 = transfer finished
  *
  * Device
@@ -243,7 +248,7 @@ ISR(USI_OVF_vect)
     
     switch (spi_state)
     {
-    case 0: // second byte
+    case 0: // first byte recvd, send second
         addr = recvd;
         if (addr >= 0x10 && addr < 0x18)
         {
@@ -261,13 +266,13 @@ ISR(USI_OVF_vect)
         }
         spi_state = 1;
         break;
-    case 1: // third byte
+    case 1: // second byte recvd, send third
         if (addr == 0x1)
             adc_channels = recvd;
         USIDR = send2;
         spi_state = 2;
         break;
-    default: // end of transfer
+    default: // third byte recvd, end of transfer
         spi_state = 3;
         USIDR = 0;
         break;
